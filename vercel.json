@@ -2,26 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "server.js",
+      "src": "api/analyze-cv.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "talentmatch-code.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "CV.png",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/analyze-cv",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/health",
-      "dest": "/server.js"
+      "dest": "/api/analyze-cv.js"
     },
     {
       "src": "/CV.png",
