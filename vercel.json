@@ -17,7 +17,7 @@
     },
     {
       "src": "/",
-      "dest": "/talentmatch-code.html"
+      "dest": "/api/analyze.js"
     }
   ]
 } 
