@@ -345,7 +345,7 @@ app.get('/health', (req, res) => {
 });
 
 // AI Analysis endpoint - Ahora usa análisis inteligente local (100% gratuito)
-app.post('/api/analyze-cv', (req, res) => {
+app.post('/api/analyze', (req, res) => {
   try {
     const { cvText } = req.body;
 
@@ -368,7 +368,7 @@ app.post('/api/analyze-cv', (req, res) => {
 app.listen(PORT, () => {
   console.log(`AilizaCV Backend server running on port ${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`AI Analysis endpoint: http://localhost:${PORT}/api/analyze-cv`);
+  console.log(`AI Analysis endpoint: http://localhost:${PORT}/api/analyze`);
 });
 
 // Export the function for testing
