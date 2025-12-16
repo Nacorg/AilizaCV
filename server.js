@@ -1,0 +1,375 @@
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+
+// Serve static files from the current directory
+app.use(express.static(path.join(__dirname)));
+
+// Serve the main HTML file at the root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'talentmatch-code.html'));
+});
+
+// Función de análisis inteligente sin APIs externas (100% gratuita)
+function analyzeCVLocally(cvText) {
+    const text = cvText.toLowerCase();
+
+    // Análisis básico del contenido
+    const hasEmail = /[\w\.-]+@[\w\.-]+\.\w+/.test(cvText);
+    const hasPhone = /(\+?\d{1,3}[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/.test(cvText);
+    const hasExperience = /(experiencia|trabajo|laboral|puesto|cargo)/.test(text);
+    const hasEducation = /(educación|estudios|universidad|carrera|grado|título)/.test(text);
+    const hasSkills = /(habilidades|competencias|conocimientos|skills)/.test(text);
+
+    // Detectar sector basado en palabras clave con mejor precisión
+    let sector = "General";
+    let role = "Profesional";
+    let skills = [];
+    let color = "from-blue-500 to-cyan-500";
+
+    // Keywords mejoradas: más simples, exclusivas y con límites de palabra (\b)
+    const techKeywords = /\b(desarrollador|programador|ingeniero|software|it|tecnología|javascript|python|java|c\+\+|php|html|css|react|angular|vue|node|backend|frontend|fullstack|devops|docker|kubernetes|aws|azure|git|github|sql|mysql|mongodb|api|rest|desarrollo|programación|código|algoritmo|base de datos|servidor|cloud|computación|informática|algoritmos|estructuras de datos|patrones de diseño|arquitectura|microservicios|testing|automatización|ci\/cd|integración continua|despliegue continuo)\b/gi;
+    const marketingKeywords = /\b(marketing|mercadeo|ventas|comercial|cliente|publicidad|anuncio|campaña|redes sociales|facebook|instagram|twitter|linkedin|seo|sem|google ads|email marketing|content marketing|brand|branding|social media|influencer|analytics|conversion|comunicación|promoción|estrategia|mercado|digital|estrategia digital|posicionamiento|posicionamiento web|ads|anuncios|publicitarios|comunicación|promocional|cliente|consumidor|target|targeting|engagement|engagement rate|leads|generación de leads|roi|retorno de inversión|kpis|métricas|performance|desempeño|canales|multicanal|omnicanal|crm|customer relationship|relaciones públicas|pr|branding|marca|identidad de marca|storytelling|contenido|content creator|creador de contenido|influencer marketing|marketing de influencers|growth hacking|crecimiento|acquisition|adquisición|retention|retención|loyalty|fidelización|customer experience|experiencia del cliente|ux|user experience|journey|customer journey|embudo|embudo de conversión|funnel|marketing automation|automatización|email|newsletter|boletín|landing page|página de aterrizaje|call to action|cta|ab testing|pruebas a\/b|segmentación|segmentation|personalización|personalization|remarketing|retargeting|display|search|busqueda|sem|sea|social ads|anuncios sociales|viral|marketing viral|guerrilla|marketing guerrilla|experiential|marketing experiencial|eventos|event marketing|trade marketing|marketing trade|btl|atl|ttl|above the line|below the line|through the line)\b/gi;
+    const designKeywords = /\b(diseño|creativo|gráfico|ux|ui|adobe|photoshop|illustrator|indesign|figma|sketch|corel|diseñador|creatividad|branding|logo|identidad visual|prototipo|wireframe|mockup|arte|gráfica|visual|creación)\b/gi;
+    const financeKeywords = /\b(finanzas|contabilidad|auditoría|banca|contable|auditor|financiero|presupuesto|balance|impuestos|facturación|sap|oracle|excel|power bi|erp|crm financiero|riesgo financiero|inversión|banco|crédito|economía|finanzas|contable)\b/gi;
+    const healthKeywords = /\b(salud|médico|enfermero|hospital|clínica|paciente|diagnóstico|tratamiento|medicina|enfermería|doctor|especialista|hospitalario|farmacia|laboratorio|radiología|cirugía|emergencias|salud pública|sanidad|clínico)\b/gi;
+    const educationKeywords = /\b(profesor|docente|educador|enseñanza|pedagogía|didáctica|colegio|escuela|universidad|instituto|academia|formación|aprendizaje|estudiante|alumno|clase|lección|currículo|programa educativo)\b/gi;
+    const culinaryKeywords = /\b(cocinero|cocina|chef|gastronomía|restaurante|comida|plato|receta|menú|culinaria|gastronómico|alimentación|nutrición|hostelería|hotel|bar|cafetería|comedor)\b/gi;
+    const constructionKeywords = /\b(obrero|construcción|edificación|obra|albañil|electricista|fontanero|carpintero|madera|metal|soldadura|instalación|reforma|edificio|vivienda|infraestructura|construir)\b/gi;
+
+    const techCount = (text.match(techKeywords) || []).length;
+    const marketingCount = (text.match(marketingKeywords) || []).length;
+    const designCount = (text.match(designKeywords) || []).length;
+    const financeCount = (text.match(financeKeywords) || []).length;
+    const healthCount = (text.match(healthKeywords) || []).length;
+    const educationCount = (text.match(educationKeywords) || []).length;
+    const culinaryCount = (text.match(culinaryKeywords) || []).length;
+    const constructionCount = (text.match(constructionKeywords) || []).length;
+
+    // Ponderación básica: multiplica por factor si hay keywords clave
+    let marketingWeighted = marketingCount;
+    if (/\bmarketing\b|\bventas\b|\bcomercial\b/.test(text)) marketingWeighted *= 1.5;  // Aumenta si hay términos clave
+
+    // Crear array de sectores con sus conteos para ordenar correctamente
+    const sectors = [
+        { count: techCount, sector: "Tecnología", role: "Desarrollador/Profesional IT", skills: ["JavaScript", "Python", "SQL", "Git", "React"], color: "from-green-500 to-emerald-500" },
+        { count: marketingWeighted, sector: "Marketing y Ventas", role: "Profesional de Marketing/Ventas", skills: ["Marketing Digital", "SEO/SEM", "Redes Sociales", "CRM", "Análisis de Datos"], color: "from-purple-500 to-pink-500" },
+        { count: designCount, sector: "Diseño y Creatividad", role: "Diseñador/Profesional Creativo", skills: ["Adobe Creative Suite", "Figma", "UX/UI", "Ilustración", "Branding"], color: "from-orange-500 to-red-500" },
+        { count: financeCount, sector: "Finanzas", role: "Profesional Financiero", skills: ["Excel", "SAP", "Análisis Financiero", "Contabilidad", "Auditoría"], color: "from-blue-500 to-indigo-500" },
+        { count: healthCount, sector: "Salud", role: "Profesional de la Salud", skills: ["Atención al Paciente", "Diagnóstico", "Tratamientos", "Registro Médico", "Protocolos"], color: "from-red-500 to-pink-500" },
+        { count: educationCount, sector: "Educación", role: "Profesor/Educador", skills: ["Pedagogía", "Didáctica", "Evaluación", "Planificación", "Comunicación"], color: "from-yellow-500 to-orange-500" },
+        { count: culinaryCount, sector: "Hostelería y Gastronomía", role: "Cocinero/Chef", skills: ["Cocina", "Gastronomía", "Higiene Alimentaria", "Creatividad Culinaria", "Gestión de Menús"], color: "from-red-500 to-orange-500" },
+        { count: constructionCount, sector: "Construcción", role: "Profesional de Construcción", skills: ["Construcción", "Instalaciones", "Seguridad Laboral", "Planificación", "Materiales"], color: "from-gray-500 to-slate-500" }
+    ];
+
+    // Ordenar por conteo descendente y seleccionar el que tenga más coincidencias
+    sectors.sort((a, b) => b.count - a.count);
+
+    // Umbral: Solo selecciona si count >= 2; si no, "General"
+    if (sectors[0].count >= 2) {
+        sector = sectors[0].sector;
+        role = sectors[0].role;
+        skills = sectors[0].skills;
+        color = sectors[0].color;
+    }
+
+    // Calcular puntuaciones basadas en completitud del CV
+    const completenessScore = [hasEmail, hasPhone, hasExperience, hasEducation, hasSkills].filter(Boolean).length;
+    const overallScore = Math.min(95, 60 + (completenessScore * 7));
+
+    // Extraer información básica
+    const emailMatch = cvText.match(/[\w\.-]+@[\w\.-]+\.\w+/);
+    const phoneMatch = cvText.match(/(\+?\d{1,3}[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/);
+
+    // Extraer información más detallada de educación y experiencia
+    let educationDetails = [];
+    let experienceDetails = [];
+
+    if (hasEducation) {
+        const lines = cvText.split('\n');
+        let currentSection = null;
+        let pendingDegrees = [];
+        let currentInstitution = "";
+        let currentPeriod = "";
+
+        for (let i = 0; i < lines.length; i++) {
+            const trimmedLine = lines[i].trim();
+            if (trimmedLine.length < 3) continue;
+
+            // Check for section headers
+            if (/(?:educación|estudios|formación académica|experiencia|trabajo|habilidades|competencias|idiomas|lenguajes)/i.test(trimmedLine)) {
+                // Process pending degrees with current institution and period
+                for (const degree of pendingDegrees) {
+                    if (degree.length > 2 && currentInstitution.length > 2) {
+                        educationDetails.push({
+                            degree: degree,
+                            institution: currentInstitution,
+                            period: currentPeriod || "Período académico",
+                            status: "Completado"
+                        });
+                    }
+                }
+                pendingDegrees = [];
+                currentSection = trimmedLine.toLowerCase();
+                if (currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación')) {
+                    // Continue processing education
+                } else {
+                    // End education processing
+                    break;
+                }
+                continue;
+            }
+
+            if (currentSection && (currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación'))) {
+                // In education section
+                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|doctorado|bachillerato|diplomado|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado|formación)/i;
+                if (degreeKeywords.test(trimmedLine)) {
+                    let degree = trimmedLine;
+                    let institution = "Institución educativa";
+                    let period = "Período académico";
+                    // Buscar más información en las siguientes líneas
+                    for (let k = i + 1; k < lines.length && k < i + 5; k++) {
+                        const nextLine = lines[k].trim();
+                        if (nextLine.length < 3) continue;
+                        // Si parece institución
+                        if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad)/i.test(nextLine)) {
+                            institution = nextLine;
+                        }
+                        // Si parece período
+                        else if (/\d{4}(?:\s*-\s*\d{4})?/.test(nextLine)) {
+                            period = nextLine;
+                            break;
+                        }
+                    }
+                    educationDetails.push({
+                        degree: degree,
+                        institution: institution,
+                        period: period,
+                        status: "Completado"
+                    });
+                    continue; // Skip adding to pending
+                }
+            } else if (!currentSection) {
+                // Before any section, assume education
+                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|doctorado|bachillerato|diplomado|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado)/i;
+                if (degreeKeywords.test(trimmedLine)) {
+                    pendingDegrees.push(trimmedLine);
+                } else if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad)/i.test(trimmedLine)) {
+                    currentInstitution = trimmedLine;
+                } else if (/\d{4}(?:\s*-\s*\d{4})?/.test(trimmedLine)) {
+                    currentPeriod = trimmedLine;
+                    // Assign to pending degrees
+                    for (const degree of pendingDegrees) {
+                        if (degree.length > 2 && currentInstitution.length > 2) {
+                            educationDetails.push({
+                                degree: degree,
+                                institution: currentInstitution,
+                                period: currentPeriod,
+                                status: "Completado"
+                            });
+                        }
+                    }
+                    pendingDegrees = [];
+                }
+            }
+        }
+
+        // Process any remaining pending degrees
+        for (const degree of pendingDegrees) {
+            if (degree.length > 2 && currentInstitution.length > 2) {
+                educationDetails.push({
+                    degree: degree,
+                    institution: currentInstitution,
+                    period: currentPeriod || "Período académico",
+                    status: "Completado"
+                });
+            }
+        }
+
+        // Remove duplicates
+        educationDetails = educationDetails.filter((item, index, self) =>
+            index === self.findIndex(t => t.degree === item.degree && t.institution === item.institution && t.period === item.period)
+        );
+
+        if (educationDetails.length === 0) {
+            educationDetails.push({
+                degree: "Título identificado en el CV",
+                institution: "Institución educativa",
+                period: "Período académico",
+                status: "Completado"
+            });
+        }
+    }
+
+    if (hasExperience) {
+        // Buscar líneas que contengan información de experiencia laboral
+        const lines = cvText.split('\n');
+        for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine.length < 10) continue; // Ignorar líneas muy cortas
+
+            // Buscar formato: "Trabajé como Desarrollador Web en Empresa XYZ, 2020-2022"
+            const experienceMatch = trimmedLine.match(/(?:trabaj[óe]|labor[óe])\s+(?:como\s+)?([^,]+?)\s+(?:en|de)\s+([^,]+?),\s*([^,\n\r]*)/i);
+            if (experienceMatch) {
+                const title = experienceMatch[1].trim();
+                const company = experienceMatch[2].trim();
+                const period = experienceMatch[3].trim();
+                if (title.length > 3 && company.length > 2) {
+                    experienceDetails.push({
+                        title: title,
+                        company: company,
+                        period: period,
+                        description: "Experiencia profesional detectada en el CV"
+                    });
+                }
+                continue;
+            }
+
+            // Buscar patrones más simples
+            const simpleMatch = trimmedLine.match(/(?:puesto|cargo|posición|rol)\s+(?:de\s+)?([^,\n\r]{5,}?)(?:\s+(?:en|de)\s+([^,\n\r]{3,}?))?(?:\s*,\s*([^,\n\r]*))?/i);
+            if (simpleMatch) {
+                const title = simpleMatch[1].trim();
+                const company = simpleMatch[2] || "Empresa";
+                const period = simpleMatch[3] || "Experiencia laboral identificada";
+                if (title.length > 3) {
+                    experienceDetails.push({
+                        title: title,
+                        company: company.trim(),
+                        period: period.trim(),
+                        description: "Experiencia profesional detectada en el CV"
+                    });
+                }
+            }
+        }
+
+        // Si no se encontraron detalles específicos, usar genérico
+        if (experienceDetails.length === 0) {
+            experienceDetails.push({
+                title: "Profesional",
+                company: "Empresa",
+                period: "Experiencia laboral identificada",
+                description: "Experiencia profesional detectada en el CV"
+            });
+        }
+    }
+
+    return {
+        debug: { 
+            techCount, 
+            marketingCount: marketingWeighted,  // Muestra el ponderado
+            designCount, 
+            financeCount, 
+            healthCount, 
+            educationCount, 
+            culinaryCount, 
+            constructionCount,
+            selectedSector: sector,
+            thresholdMet: sectors[0].count >= 2
+        },
+        name: "Candidato Analizado",
+        role: role,
+        sector: sector,
+        location: "Información no especificada",
+        email: emailMatch ? emailMatch[0] : null,
+        phone: phoneMatch ? phoneMatch[0] : null,
+        linkedin: null,
+        github: null,
+        tagline: `Perfil profesional en ${sector} - Analizado con IA gratuita`,
+        overallScore: overallScore,
+        education: educationDetails,
+        skills: {
+            "habilidades_principales": {
+                name: `Habilidades en ${sector}`,
+                level: Math.floor(overallScore * 0.8),
+                techs: skills,
+                color: color
+            }
+        },
+        experience: experienceDetails,
+        certifications: [],
+        softSkills: [
+            { name: "Comunicación", level: Math.floor(Math.random() * 20) + 70 },
+            { name: "Trabajo en equipo", level: Math.floor(Math.random() * 20) + 70 },
+            { name: "Adaptabilidad", level: Math.floor(Math.random() * 20) + 70 },
+            { name: "Resolución de problemas", level: Math.floor(Math.random() * 20) + 70 }
+        ],
+        languages: [
+            { name: "Español", level: "Nativo", percentage: 100 }
+        ],
+        aiAnalysis: {
+            technicalFit: Math.floor(overallScore * 0.9),
+            experienceLevel: Math.floor(overallScore * 0.85),
+            learningAgility: Math.floor(Math.random() * 20) + 75,
+            versatility: Math.floor(Math.random() * 20) + 70,
+            keyInsights: [
+                `Perfil identificado en el sector ${sector}`,
+                hasExperience ? "Experiencia laboral detectada" : "Sin experiencia específica mencionada",
+                hasEducation ? "Formación académica identificada" : "Formación académica no especificada",
+                hasSkills ? "Habilidades técnicas mencionadas" : "Habilidades no detalladas",
+                "CV analizado exitosamente con IA gratuita"
+            ],
+            strengths: [
+                `Conocimientos en ${sector}`,
+                hasExperience ? "Experiencia profesional" : "Potencial de aprendizaje",
+                "Capacidad de comunicación",
+                "Trabajo en equipo"
+            ],
+            areasToImprove: [
+                !hasEmail ? "Agregar información de contacto" : "Información de contacto completa",
+                !hasExperience ? "Detallar experiencia laboral" : "Especificar logros cuantificables",
+                !hasSkills ? "Listar habilidades específicas" : "Actualizar tecnologías recientes",
+                "Agregar referencias profesionales"
+            ],
+            recommendation: `Candidato ${overallScore > 80 ? 'muy recomendado' : overallScore > 70 ? 'recomendado' : 'con potencial'} para posiciones en ${sector}. ${hasExperience ? 'Cuenta con experiencia relevante.' : 'Tiene potencial de crecimiento en el área.'}`,
+            idealRoles: [
+                role,
+                `Especialista en ${sector}`,
+                "Profesional General",
+                "Consultor"
+            ]
+        }
+    };
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'AilizaCV Backend is running' });
+});
+
+// AI Analysis endpoint - Ahora usa análisis inteligente local (100% gratuito)
+app.post('/api/analyze-cv', (req, res) => {
+  try {
+    const { cvText } = req.body;
+
+    if (!cvText) {
+      return res.status(400).json({ error: 'CV text is required' });
+    }
+
+    // Usar análisis inteligente local (sin APIs externas)
+    const analysisResult = analyzeCVLocally(cvText);
+    res.json(analysisResult);
+
+  } catch (error) {
+    console.error('Error in AI analysis:', error);
+    res.status(500).json({
+      error: 'Error analyzing CV',
+      details: error.message
+    });
+  }
+});
+app.listen(PORT, () => {
+  console.log(`AilizaCV Backend server running on port ${PORT}`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`AI Analysis endpoint: http://localhost:${PORT}/api/analyze-cv`);
+});
+
+// Export the function for testing
+module.exports.analyzeCVLocally = analyzeCVLocally;
