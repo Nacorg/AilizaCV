@@ -564,10 +564,10 @@
             if (!showModal) return '';
 
             return `
-                <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-labelledby="upload-modal-title" aria-modal="true">
                     <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-2xl w-full border border-purple-500/30 shadow-2xl">
                         <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                            <h3 class="text-2xl font-bold flex items-center gap-3">
+                            <h3 id="upload-modal-title" class="text-2xl font-bold flex items-center gap-3">
                                 <i class="fas fa-cloud-upload-alt text-purple-400"></i>
                                 Sube tu CV
                             </h3>
@@ -646,10 +646,10 @@
             if (!showQRModal) return '';
 
             return `
-                <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+                <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" role="dialog" aria-labelledby="qr-modal-title" aria-modal="true">
                     <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl max-w-md w-full border border-orange-500/30 shadow-2xl">
                         <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                            <h3 class="text-2xl font-bold flex items-center gap-3">
+                            <h3 id="qr-modal-title" class="text-2xl font-bold flex items-center gap-3">
                                 <i class="fas fa-qrcode text-orange-400"></i>
                                 CV del Creador
                             </h3>
