@@ -94,7 +94,7 @@
 
         async function analyzeWithAI(cvText) {
             try {
-                const apiUrl = window.location.protocol === 'file:' ? 'http://localhost:3001/api/analyze' : '/api/analyze-cv';
+                const apiUrl = window.location.protocol === 'file:' ? 'http://localhost:3001/api/analyze' : '/api/analyze';
                 const response = await fetch(apiUrl, {
                     method: "POST",
                     headers: {

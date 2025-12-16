@@ -8,10 +8,6 @@
   ],
   "routes": [
     {
-      "src": "/api/analyze-cv",
-      "dest": "/api/analyze.js"
-    },
-    {
       "src": "/CV.png",
       "dest": "/CV.png"
     },
@@ -20,4 +16,4 @@
       "dest": "/talentmatch-code.html"
     }
   ]
-} 
+}
