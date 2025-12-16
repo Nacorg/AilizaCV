@@ -1,29 +1,72 @@
-// api/analyze-cv.js - Serverless Function para Vercel
+// api/analyze.js
+export default async function handler(req, res) {
+    // CORS
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    try {
+        const { cvText } = req.body;
+
+        if (!cvText) {
+            return res.status(400).json({ error: 'CV text is required' });
+        }
+
+        // Análisis inteligente local (100% gratuito)
+        const result = analyzeCVLocally(cvText);
+        return res.status(200).json(result);
+
+    } catch (error) {
+        console.error('Error:', error);
+        return res.status(500).json({
+            error: 'Error analyzing CV',
+            details: error.message
+        });
+    }
+}
+
+// Función de análisis inteligente sin APIs externas (100% gratuita)
 function analyzeCVLocally(cvText) {
     const text = cvText.toLowerCase();
 
     // Análisis básico del contenido
     const hasEmail = /[\w\.-]+@[\w\.-]+\.\w+/.test(cvText);
     const hasPhone = /(\+?\d{1,3}[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/.test(cvText);
-    const hasExperience = /(experiencia|trabajo|laboral|puesto|cargo)/.test(text);
-    const hasEducation = /(educación|estudios|universidad|carrera|grado|título)/.test(text);
-    const hasSkills = /(habilidades|competencias|conocimientos|skills)/.test(text);
+    const hasExperience = /(experiencia|trabajo|laboral|puesto|cargo|experience|work|job|position)/.test(text);
+    const hasEducation = /(educación|estudios|universidad|carrera|grado|título|education|university|degree|studies)/.test(text);
+    const hasSkills = /(habilidades|competencias|conocimientos|skills|abilities|competencies)/.test(text);
 
-    // Detectar sector basado en palabras clave
+    // Detectar sector basado en palabras clave con mejor precisión
     let sector = "General";
     let role = "Profesional";
     let skills = [];
     let color = "from-blue-500 to-cyan-500";
 
-    const techKeywords = /\b(desarrollador|programador|ingeniero|software|it|tecnología|javascript|python|java|c\+\+|php|html|css|react|angular|vue|node|backend|frontend|fullstack|devops|docker|kubernetes|aws|azure|git|github|sql|mysql|mongodb|api|rest|desarrollo|programación|código|algoritmo|base de datos|servidor|cloud|computación|informática|algoritmos|estructuras de datos|patrones de diseño|arquitectura|microservicios|testing|automatización|ci\/cd|integración continua|despliegue continuo)\b/gi;
-    const marketingKeywords = /\b(marketing|mercadeo|ventas|comercial|cliente|publicidad|anuncio|campaña|redes sociales|facebook|instagram|twitter|linkedin|seo|sem|google ads|email marketing|content marketing|brand|branding|social media|influencer|analytics|conversion|comunicación|promoción|estrategia|mercado|digital|estrategia digital|posicionamiento|posicionamiento web|ads|anuncios|publicitarios|comunicación|promocional|cliente|consumidor|target|targeting|engagement|engagement rate|leads|generación de leads|roi|retorno de inversión|kpis|métricas|performance|desempeño|canales|multicanal|omnicanal|crm|customer relationship|relaciones públicas|pr|branding|marca|identidad de marca|storytelling|contenido|content creator|creador de contenido|influencer marketing|marketing de influencers|growth hacking|crecimiento|acquisition|adquisición|retention|retención|loyalty|fidelización|customer experience|experiencia del cliente|ux|user experience|journey|customer journey|embudo|embudo de conversión|funnel|marketing automation|automatización|email|newsletter|boletín|landing page|página de aterrizaje|call to action|cta|ab testing|pruebas a\/b|segmentación|segmentation|personalización|personalization|remarketing|retargeting|display|search|busqueda|sem|sea|social ads|anuncios sociales|viral|marketing viral|guerrilla|marketing guerrilla|experiential|marketing experiencial|eventos|event marketing|trade marketing|marketing trade|btl|atl|ttl|above the line|below the line|through the line)\b/gi;
-    const designKeywords = /\b(diseño|creativo|gráfico|ux|ui|adobe|photoshop|illustrator|indesign|figma|sketch|corel|diseñador|creatividad|branding|logo|identidad visual|prototipo|wireframe|mockup|arte|gráfica|visual|creación)\b/gi;
-    const financeKeywords = /\b(finanzas|contabilidad|auditoría|banca|contable|auditor|financiero|presupuesto|balance|impuestos|facturación|sap|oracle|excel|power bi|erp|crm financiero|riesgo financiero|inversión|banco|crédito|economía|finanzas|contable)\b/gi;
-    const healthKeywords = /\b(salud|médico|enfermero|hospital|clínica|paciente|diagnóstico|tratamiento|medicina|enfermería|doctor|especialista|hospitalario|farmacia|laboratorio|radiología|cirugía|emergencias|salud pública|sanidad|clínico)\b/gi;
-    const educationKeywords = /\b(profesor|docente|educador|enseñanza|pedagogía|didáctica|colegio|escuela|universidad|instituto|academia|formación|aprendizaje|estudiante|alumno|clase|lección|currículo|programa educativo)\b/gi;
-    const culinaryKeywords = /\b(cocinero|cocina|chef|gastronomía|restaurante|comida|plato|receta|menú|culinaria|gastronómico|alimentación|nutrición|hostelería|hotel|bar|cafetería|comedor)\b/gi;
-    const constructionKeywords = /\b(obrero|construcción|edificación|obra|albañil|electricista|fontanero|carpintero|madera|metal|soldadura|instalación|reforma|edificio|vivienda|infraestructura|construir)\b/gi;
+    // Keywords mejoradas por sector
+    const techKeywords = /\b(desarrollador|programador|ingeniero|software|it|tecnología|javascript|python|java|c\+\+|php|html|css|react|angular|vue|node|backend|frontend|fullstack|devops|docker|kubernetes|aws|azure|git|github|sql|mysql|mongodb|api|rest|desarrollo|programación|código|algoritmo|base de datos|servidor|cloud|computación|informática|algoritmos|estructuras de datos|patrones de diseño|arquitectura|microservicios|testing|automatización|ci\/cd|integración continua|despliegue continuo|developer|programmer|engineer|coding|code|programming)\b/gi;
+    
+    const marketingKeywords = /\b(marketing|mercadeo|ventas|comercial|cliente|publicidad|anuncio|campaña|redes sociales|facebook|instagram|twitter|linkedin|seo|sem|google ads|email marketing|content marketing|brand|branding|social media|influencer|analytics|conversion|comunicación|promoción|estrategia|mercado|digital|estrategia digital|posicionamiento|posicionamiento web|ads|anuncios|publicitarios|comunicación|promocional|cliente|consumidor|target|targeting|engagement|engagement rate|leads|generación de leads|roi|retorno de inversión|kpis|métricas|performance|desempeño|canales|multicanal|omnicanal|crm|customer relationship|relaciones públicas|pr|storytelling|contenido|content creator|creador de contenido|influencer marketing|marketing de influencers|growth hacking|crecimiento|acquisition|adquisición|retention|retención|loyalty|fidelización|customer experience|experiencia del cliente|ux|user experience|journey|customer journey|embudo|embudo de conversión|funnel|marketing automation|automatización|email|newsletter|boletín|landing page|página de aterrizaje|call to action|cta|ab testing|pruebas a\/b|segmentación|segmentation|personalización|personalization|remarketing|retargeting|display|search|busqueda|viral|marketing viral|guerrilla|experiential|eventos|event marketing|trade marketing|btl|atl|ttl|sales|advertising|campaign|promotion)\b/gi;
+    
+    const designKeywords = /\b(diseño|creativo|gráfico|ux|ui|adobe|photoshop|illustrator|indesign|figma|sketch|corel|diseñador|creatividad|branding|logo|identidad visual|prototipo|wireframe|mockup|arte|gráfica|visual|creación|design|designer|creative|graphic|illustration|prototype|artwork|visual identity)\b/gi;
+    
+    const financeKeywords = /\b(finanzas|contabilidad|auditoría|banca|contable|auditor|financiero|presupuesto|balance|impuestos|facturación|sap|oracle|excel|power bi|erp|crm financiero|riesgo financiero|inversión|banco|crédito|economía|contador|tesorería|finance|accounting|audit|banking|accountant|auditor|budget|taxes|investment|bank|credit|economy|treasury)\b/gi;
+    
+    const healthKeywords = /\b(salud|médico|enfermero|hospital|clínica|paciente|diagnóstico|tratamiento|medicina|enfermería|doctor|especialista|hospitalario|farmacia|laboratorio|radiología|cirugía|emergencias|salud pública|sanidad|clínico|health|medical|nurse|hospital|clinic|patient|diagnosis|treatment|doctor|pharmacy|surgery|emergency)\b/gi;
+    
+    const educationKeywords = /\b(profesor|docente|educador|enseñanza|pedagogía|didáctica|colegio|escuela|universidad|instituto|academia|formación|aprendizaje|estudiante|alumno|clase|lección|currículo|programa educativo|teacher|educator|teaching|pedagogy|school|training|learning|student|classroom|curriculum)\b/gi;
+    
+    const culinaryKeywords = /\b(cocinero|cocina|chef|gastronomía|restaurante|comida|plato|receta|menú|culinaria|gastronómico|alimentación|nutrición|hostelería|hotel|bar|cafetería|comedor|cook|cooking|culinary|restaurant|food|recipe|menu|hospitality|catering)\b/gi;
+    
+    const constructionKeywords = /\b(obrero|construcción|edificación|obra|albañil|electricista|fontanero|carpintero|madera|metal|soldadura|instalación|reforma|edificio|vivienda|infraestructura|construir|worker|construction|building|electrician|plumber|carpenter|wood|metal|welding|installation)\b/gi;
 
     const techCount = (text.match(techKeywords) || []).length;
     const marketingCount = (text.match(marketingKeywords) || []).length;
@@ -34,9 +77,11 @@ function analyzeCVLocally(cvText) {
     const culinaryCount = (text.match(culinaryKeywords) || []).length;
     const constructionCount = (text.match(constructionKeywords) || []).length;
 
+    // Ponderación: multiplica por factor si hay keywords clave
     let marketingWeighted = marketingCount;
-    if (/\bmarketing\b|\bventas\b|\bcomercial\b/.test(text)) marketingWeighted *= 1.5;
+    if (/\bmarketing\b|\bventas\b|\bcomercial\b|\bsales\b/.test(text)) marketingWeighted *= 1.5;
 
+    // Array de sectores con sus conteos para ordenar correctamente
     const sectors = [
         { count: techCount, sector: "Tecnología", role: "Desarrollador/Profesional IT", skills: ["JavaScript", "Python", "SQL", "Git", "React"], color: "from-green-500 to-emerald-500" },
         { count: marketingWeighted, sector: "Marketing y Ventas", role: "Profesional de Marketing/Ventas", skills: ["Marketing Digital", "SEO/SEM", "Redes Sociales", "CRM", "Análisis de Datos"], color: "from-purple-500 to-pink-500" },
@@ -48,24 +93,29 @@ function analyzeCVLocally(cvText) {
         { count: constructionCount, sector: "Construcción", role: "Profesional de Construcción", skills: ["Construcción", "Instalaciones", "Seguridad Laboral", "Planificación", "Materiales"], color: "from-gray-500 to-slate-500" }
     ];
 
+    // Ordenar por conteo descendente y seleccionar el que tenga más coincidencias
     sectors.sort((a, b) => b.count - a.count);
 
+    // Umbral: Solo selecciona si count >= 2; si no, "General"
     if (sectors[0].count >= 2) {
         sector = sectors[0].sector;
         role = sectors[0].role;
         skills = sectors[0].skills;
         color = sectors[0].color;
+    } else {
+        skills = ["Comunicación", "Trabajo en equipo", "Adaptabilidad"];
     }
 
+    // Calcular puntuaciones basadas en completitud del CV
     const completenessScore = [hasEmail, hasPhone, hasExperience, hasEducation, hasSkills].filter(Boolean).length;
     const overallScore = Math.min(95, 60 + (completenessScore * 7));
 
+    // Extraer información básica
     const emailMatch = cvText.match(/[\w\.-]+@[\w\.-]+\.\w+/);
     const phoneMatch = cvText.match(/(\+?\d{1,3}[-.\s]?)?\(?(\d{3})\)?[-.\s]?(\d{3})[-.\s]?(\d{4})/);
 
+    // Extraer educación detallada
     let educationDetails = [];
-    let experienceDetails = [];
-
     if (hasEducation) {
         const lines = cvText.split('\n');
         let currentSection = null;
@@ -77,7 +127,9 @@ function analyzeCVLocally(cvText) {
             const trimmedLine = lines[i].trim();
             if (trimmedLine.length < 3) continue;
 
-            if (/(?:educación|estudios|formación académica|experiencia|trabajo|habilidades|competencias|idiomas|lenguajes)/i.test(trimmedLine)) {
+            // Detectar secciones
+            if (/(?:educación|estudios|formación académica|education|academic|experiencia|experience|trabajo|work|habilidades|skills|competencias|idiomas|languages)/i.test(trimmedLine) && trimmedLine.length < 50) {
+                // Procesar grados pendientes
                 for (const degree of pendingDegrees) {
                     if (degree.length > 2 && currentInstitution.length > 2) {
                         educationDetails.push({
@@ -90,25 +142,25 @@ function analyzeCVLocally(cvText) {
                 }
                 pendingDegrees = [];
                 currentSection = trimmedLine.toLowerCase();
-                if (currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación')) {
-                } else {
+                if (!(currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación') || currentSection.includes('education') || currentSection.includes('academic'))) {
                     break;
                 }
                 continue;
             }
 
-            if (currentSection && (currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación'))) {
-                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|doctorado|bachillerato|diplomado|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado|formación)/i;
+            if (currentSection && (currentSection.includes('educación') || currentSection.includes('estudios') || currentSection.includes('formación') || currentSection.includes('education') || currentSection.includes('academic'))) {
+                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|master|doctorado|phd|doctorate|bachillerato|high school|diplomado|diploma|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado|certificate|formación|degree|bachelor|education)/i;
                 if (degreeKeywords.test(trimmedLine)) {
                     let degree = trimmedLine;
                     let institution = "Institución educativa";
                     let period = "Período académico";
+                    
                     for (let k = i + 1; k < lines.length && k < i + 5; k++) {
                         const nextLine = lines[k].trim();
                         if (nextLine.length < 3) continue;
-                        if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad)/i.test(nextLine)) {
+                        if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad|^university|^institute|^school|^college)/i.test(nextLine)) {
                             institution = nextLine;
-                        } else if (/\d{4}(?:\s*-\s*\d{4})?/.test(nextLine)) {
+                        } else if (/\d{4}(?:\s*[-–]\s*\d{4})?/.test(nextLine)) {
                             period = nextLine;
                             break;
                         }
@@ -122,12 +174,12 @@ function analyzeCVLocally(cvText) {
                     continue;
                 }
             } else if (!currentSection) {
-                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|doctorado|bachillerato|diplomado|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado)/i;
+                const degreeKeywords = /(?:licenciatur[ae]|ingenier[íi]a?|máster|master|doctorado|phd|bachillerato|diplomado|fp|formación profesional|técnico superior|ciclo formativo|grado superior|grado medio|certificado|degree|bachelor)/i;
                 if (degreeKeywords.test(trimmedLine)) {
                     pendingDegrees.push(trimmedLine);
-                } else if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad)/i.test(trimmedLine)) {
+                } else if (/(?:^universidad|^instituto|^colegio|^escuela|^centro|^academia|^facultad|^university|^institute|^school|^college)/i.test(trimmedLine)) {
                     currentInstitution = trimmedLine;
-                } else if (/\d{4}(?:\s*-\s*\d{4})?/.test(trimmedLine)) {
+                } else if (/\d{4}(?:\s*[-–]\s*\d{4})?/.test(trimmedLine)) {
                     currentPeriod = trimmedLine;
                     for (const degree of pendingDegrees) {
                         if (degree.length > 2 && currentInstitution.length > 2) {
@@ -169,13 +221,15 @@ function analyzeCVLocally(cvText) {
         }
     }
 
+    // Extraer experiencia detallada
+    let experienceDetails = [];
     if (hasExperience) {
         const lines = cvText.split('\n');
         for (const line of lines) {
             const trimmedLine = line.trim();
             if (trimmedLine.length < 10) continue;
 
-            const experienceMatch = trimmedLine.match(/(?:trabaj[óe]|labor[óe])\s+(?:como\s+)?([^,]+?)\s+(?:en|de)\s+([^,]+?),\s*([^,\n\r]*)/i);
+            const experienceMatch = trimmedLine.match(/(?:trabaj[óe]|labor[óe]|worked)\s+(?:como\s+|as\s+)?([^,]+?)\s+(?:en|de|at|in)\s+([^,]+?),\s*([^,\n\r]*)/i);
             if (experienceMatch) {
                 const title = experienceMatch[1].trim();
                 const company = experienceMatch[2].trim();
@@ -191,7 +245,7 @@ function analyzeCVLocally(cvText) {
                 continue;
             }
 
-            const simpleMatch = trimmedLine.match(/(?:puesto|cargo|posición|rol)\s+(?:de\s+)?([^,\n\r]{5,}?)(?:\s+(?:en|de)\s+([^,\n\r]{3,}?))?(?:\s*,\s*([^,\n\r]*))?/i);
+            const simpleMatch = trimmedLine.match(/(?:puesto|cargo|posición|rol|position|role|job)\s+(?:de\s+|as\s+)?([^,\n\r]{5,}?)(?:\s+(?:en|de|at|in)\s+([^,\n\r]{3,}?))?(?:\s*,\s*([^,\n\r]*))?/i);
             if (simpleMatch) {
                 const title = simpleMatch[1].trim();
                 const company = simpleMatch[2] || "Empresa";
@@ -238,6 +292,7 @@ function analyzeCVLocally(cvText) {
             }
         },
         experience: experienceDetails,
+        projects: [],
         certifications: [],
         softSkills: [
             { name: "Comunicación", level: Math.floor(Math.random() * 20) + 70 },
@@ -266,12 +321,6 @@ function analyzeCVLocally(cvText) {
                 "Capacidad de comunicación",
                 "Trabajo en equipo"
             ],
-            areasToImprove: [
-                !hasEmail ? "Agregar información de contacto" : "Información de contacto completa",
-                !hasExperience ? "Detallar experiencia laboral" : "Especificar logros cuantificables",
-                !hasSkills ? "Listar habilidades específicas" : "Actualizar tecnologías recientes",
-                "Agregar referencias profesionales"
-            ],
             recommendation: `Candidato ${overallScore > 80 ? 'muy recomendado' : overallScore > 70 ? 'recomendado' : 'con potencial'} para posiciones en ${sector}. ${hasExperience ? 'Cuenta con experiencia relevante.' : 'Tiene potencial de crecimiento en el área.'}`,
             idealRoles: [
                 role,
@@ -282,43 +331,3 @@ function analyzeCVLocally(cvText) {
         }
     };
 }
-
-// Handler para Vercel Serverless Function
-module.exports = async (req, res) => {
-    // Configurar CORS
-    res.setHeader('Access-Control-Allow-Credentials', true);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
-
-    // Manejar OPTIONS request
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-
-    // Solo aceptar POST
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    try {
-        const { cvText } = req.body;
-
-        if (!cvText) {
-            return res.status(400).json({ error: 'CV text is required' });
-        }
-
-        // Analizar CV localmente
-        const analysisResult = analyzeCVLocally(cvText);
-        
-        return res.status(200).json(analysisResult);
-
-    } catch (error) {
-        console.error('Error in AI analysis:', error);
-        return res.status(500).json({
-            error: 'Error analyzing CV',
-            details: error.message
-        });
-    }
-};
