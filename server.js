@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
 
 // Handle favicon requests
 app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'favicon.ico'));
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
 app.listen(PORT, () => {
