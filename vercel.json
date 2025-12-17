@@ -16,6 +16,10 @@
       "dest": "/CV.png"
     },
     {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
       "src": "/",
       "dest": "/talentmatch-code.html"
     }

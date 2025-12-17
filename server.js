@@ -53,6 +53,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'talentmatch-code.html'));
 });
 
+// Handle favicon requests
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
