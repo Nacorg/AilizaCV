@@ -331,3 +331,5 @@ function analyzeCVLocally(cvText) {
         }
     };
 }
+
+export { analyzeCVLocally };
