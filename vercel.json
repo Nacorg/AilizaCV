@@ -4,6 +4,10 @@
     {
       "src": "api/analyze.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "talentmatch-code.html",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
