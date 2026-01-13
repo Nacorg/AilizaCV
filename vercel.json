@@ -4,10 +4,6 @@
     {
       "src": "api/analyze.js",
       "use": "@vercel/node"
-    },
-    {
-      "src": "talentmatch-code.html",
-      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -17,11 +13,11 @@
     },
     {
       "src": "/CV.png",
-      "dest": "/CV.png"
+      "dest": "/public/CV.png"
     },
     {
       "src": "/favicon.ico",
-      "dest": "/favicon.ico"
+      "dest": "/public/favicon.ico"
     },
     {
       "src": "/",
